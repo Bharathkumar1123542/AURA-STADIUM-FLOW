@@ -1,0 +1,138 @@
+# AURA Stadium Flow Intelligence – Docker Compose
+# version key intentionally omitted (deprecated in Compose Spec; ignored by Docker Compose v2+)
+
+# ══ AURA Stadium Flow Intelligence – Docker Compose ══════════════
+# Each service is independently deployable and scalable.
+# Default networking: all services on "aura-net" bridge.
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────────
+  # WHY: Persistent storage for density logs, nudge history, path decisions.
+  db:
+    image: postgres:16-alpine
+    container_name: aura-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       aura_db
+      POSTGRES_USER:     aura
+      POSTGRES_PASSWORD: aura_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend_core/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    ports:
+      # Expose on loopback only for local DBA access; remove in production.
+      - "127.0.0.1:5432:5432"
+    networks:
+      - aura-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aura -d aura_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── MQTT Broker (Mosquitto) ─────────────────────────────────────
+  # WHY: IoT LED controllers use MQTT (lightweight, at-least-once delivery).
+  mqtt_broker:
+    image: eclipse-mosquitto:2.0
+    container_name: aura-mqtt
+    restart: unless-stopped
+    ports:
+      - "1883:1883"     # MQTT
+      - "9001:9001"     # WebSocket (optional dashboard use)
+    volumes:
+      - ./infra/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    networks:
+      - aura-net
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Backend Core (FastAPI) ──────────────────────────────────────
+  backend_core:
+    build:
+      context: .
+      dockerfile: backend_core/Dockerfile
+    container_name: aura-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://aura:aura_pass@db:5432/aura_db
+      MQTT_HOST:    mqtt_broker
+      MQTT_PORT:    "1883"
+      LOG_LEVEL:    INFO
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      mqtt_broker:
+        condition: service_started
+    networks:
+      - aura-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Camera Engine ──────────────────────────────────────────────
+  camera_engine:
+    build:
+      context: .
+      dockerfile: camera_engine/Dockerfile
+    container_name: aura-camera
+    restart: unless-stopped
+    environment:
+      BACKEND_URL:   http://backend_core:8000
+      SURGE_SECTION: "C"     # Inject surge into section C for demo
+    depends_on:
+      backend_core:
+        condition: service_healthy
+    networks:
+      - aura-net
+
+  # ── IoT Controller ─────────────────────────────────────────────
+  iot_controller:
+    build:
+      context: .
+      dockerfile: iot_controller/Dockerfile
+    container_name: aura-iot
+    restart: unless-stopped
+    environment:
+      MQTT_HOST: mqtt_broker
+      MQTT_PORT: "1883"
+    depends_on:
+      mqtt_broker:
+        condition: service_healthy
+      backend_core:
+        condition: service_healthy
+    networks:
+      - aura-net
+
+  # ── Dashboard (Nginx static server) ─────────────────────────────
+  # WHY Nginx: Dashboard is pure HTML/CSS/JS – no Node.js needed.
+  dashboard:
+    image: nginx:1.25-alpine
+    container_name: aura-dashboard
+    restart: unless-stopped
+    volumes:
+      - ./dashboard:/usr/share/nginx/html:ro
+      - ./infra/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend_core
+    networks:
+      - aura-net
+
+# ── Volumes ────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+
+# ── Networks ───────────────────────────────────────────────────────
+networks:
+  aura-net:
+    driver: bridge

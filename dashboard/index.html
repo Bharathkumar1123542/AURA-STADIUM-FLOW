@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AURA – Stadium Flow Intelligence Dashboard</title>
+  <meta name="description" content="Real-time crowd density monitoring and rerouting control center for stadium operators." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ══ SIDEBAR ═════════════════════════════════════════ -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div>
+          <div class="brand-name">AURA</div>
+          <div class="brand-sub">Flow Intelligence</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="#" class="nav-item active" id="nav-overview">
+          <span class="nav-icon">🗺️</span> Overview
+        </a>
+        <a href="#" class="nav-item" id="nav-nudges">
+          <span class="nav-icon">🎯</span> Nudges
+        </a>
+        <a href="#" class="nav-item" id="nav-analytics">
+          <span class="nav-icon">📊</span> Analytics
+        </a>
+        <a href="#" class="nav-item" id="nav-settings">
+          <span class="nav-icon">⚙️</span> Settings
+        </a>
+      </nav>
+
+      <div class="connection-status">
+        <div class="status-dot" id="connectionDot"></div>
+        <span id="connectionStatus">Connecting…</span>
+      </div>
+    </aside>
+
+    <!-- ══ MAIN CONTENT ════════════════════════════════════ -->
+    <main class="main">
+
+      <!-- Header -->
+      <header class="topbar">
+        <div>
+          <h1 class="topbar-title">Stadium Overview</h1>
+          <p class="topbar-sub">Real-time crowd density · Auto-refreshes every 3s</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="event-badge" id="eventBadge">🏟️ Live Event</div>
+          <div class="clock" id="clock"></div>
+        </div>
+      </header>
+
+      <!-- ── KPI Row ─────────────────────────────────────── -->
+      <section class="kpi-row">
+        <div class="kpi-card" id="kpi-high-risk">
+          <div class="kpi-icon">🔴</div>
+          <div class="kpi-val" id="kpiHighRisk">—</div>
+          <div class="kpi-label">High-Risk Zones</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🎯</div>
+          <div class="kpi-val" id="kpiNudges">0</div>
+          <div class="kpi-label">Nudges Fired</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🟢</div>
+          <div class="kpi-val" id="kpiGreenPaths">0</div>
+          <div class="kpi-label">Active Green Paths</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">👥</div>
+          <div class="kpi-val" id="kpiAvgDensity">—</div>
+          <div class="kpi-label">Avg Stadium Density</div>
+        </div>
+      </section>
+
+      <!-- ── Heatmap + Controls ──────────────────────────── -->
+      <section class="heatmap-section">
+
+        <!-- Stadium Heatmap -->
+        <div class="panel heatmap-panel">
+          <div class="panel-header">
+            <h2>Live Heatmap</h2>
+            <span class="panel-badge" id="heatmapTimestamp">—</span>
+          </div>
+          <div class="stadium-map" id="stadiumMap">
+            <!-- Sections injected by JS -->
+          </div>
+          <!-- Map Legend -->
+          <div class="map-legend">
+            <span><span class="legend-dot red"></span> Congested ≥70%</span>
+            <span><span class="legend-dot amber"></span> Moderate 55-70%</span>
+            <span><span class="legend-dot green"></span> Clear &lt;55%</span>
+            <span><span class="legend-dot green-path"></span> Green Path</span>
+          </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="panel controls-panel">
+          <div class="panel-header">
+            <h2>Manual Override</h2>
+          </div>
+
+          <div class="control-group">
+            <label for="overrideSection">Target Section</label>
+            <select id="overrideSection">
+              <option value="A">Section A – West Corridor</option>
+              <option value="B">Section B – North Concessions</option>
+              <option value="C">Section C – South Exit</option>
+              <option value="D">Section D – East Terrace</option>
+              <option value="E">Section E – North Gate</option>
+              <option value="F">Section F – VIP Lounge</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="overrideDensity">Inject Density Score</label>
+            <div class="range-row">
+              <input type="range" id="overrideDensity" min="0" max="100" value="75" />
+              <span id="overrideDensityVal">75%</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label for="nudgeType">Nudge Type</label>
+            <select id="nudgeType">
+              <option value="discount">Discount Voucher</option>
+              <option value="notification">Push Notification</option>
+              <option value="led_only">LED Only</option>
+            </select>
+          </div>
+
+          <button class="btn-primary" id="triggerNudgeBtn">
+            ⚡ Trigger Nudge
+          </button>
+          <button class="btn-secondary" id="clearAlertsBtn">
+            🔕 Clear All Alerts
+          </button>
+
+          <!-- Response preview -->
+          <div class="response-box" id="responseBox">
+            <pre id="responseContent">// Nudge response will appear here</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section Detail Table ────────────────────────── -->
+      <section class="panel analytics-panel">
+        <div class="panel-header">
+          <h2>Section Analytics</h2>
+          <button class="btn-sm" id="exportBtn">⬇ Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table id="sectionTable">
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Density</th>
+                <th>Predicted (10 min)</th>
+                <th>LED State</th>
+                <th>Status</th>
+                <th>Last Nudge</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Rows injected by JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Nudge Log ───────────────────────────────────── -->
+      <section class="panel log-panel">
+        <div class="panel-header">
+          <h2>Live Event Log</h2>
+          <span class="panel-badge" id="logCount">0 events</span>
+        </div>
+        <div class="log-stream" id="logStream">
+          <div class="log-placeholder">Waiting for events…</div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
