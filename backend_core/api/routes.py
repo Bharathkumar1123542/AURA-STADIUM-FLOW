@@ -21,6 +21,7 @@ CHANGES (refactor):
     MUST migrate this to Redis.  A TODO comment marks the upgrade path.
 """
 
+import asyncio
 import logging
 import time
 from typing import Dict, Optional
@@ -31,6 +32,7 @@ from pydantic import BaseModel, Field, field_validator
 from backend_core.services.nudge_engine import NudgeEngine
 from backend_core.services.pathfinder import AStarPathfinder
 from backend_core.database.db import DatabaseManager
+from backend_core.services.gcp_publisher import GCPPublisher
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +108,9 @@ class DensityUpdateResponse(BaseModel):
 _nudge_engine = NudgeEngine()
 _pathfinder = AStarPathfinder()
 
+# Google Cloud Pub/Sub publisher (no-op when GCP_PROJECT_ID is not set)
+_gcp = GCPPublisher()
+
 # TODO (multi-worker upgrade): replace with Redis hash so all uvicorn workers
 # share a consistent density snapshot.  Current single-worker mode is safe.
 _density_state: Dict[str, float] = {}
@@ -142,8 +147,10 @@ async def density_update(
     # Update shared density map
     _density_state[req.section_id] = req.density_score
 
-    # Persist to DB
-    await db.log_density(req.model_dump())
+    # Persist to DB + publish density event to GCP Pub/Sub (non-blocking)
+    density_payload = req.model_dump()
+    await db.log_density(density_payload)
+    await asyncio.to_thread(_gcp.publish_density, density_payload)
 
     # Nudge evaluation
     nudge_action = nudge_engine.evaluate(
@@ -156,6 +163,8 @@ async def density_update(
     if nudge_action:
         nudge_dict = nudge_action.to_dict()
         await db.log_nudge(nudge_dict)
+        # Publish nudge event to GCP Pub/Sub for downstream consumers
+        await asyncio.to_thread(_gcp.publish_nudge, nudge_dict)
         logger.info("Nudge persisted: %s", nudge_action.action_id)
 
     return DensityUpdateResponse(
@@ -220,6 +229,8 @@ async def trigger_nudge(
 
     nudge_dict = nudge_action.to_dict()
     await db.log_nudge(nudge_dict)
+    # Publish manual nudge event to GCP Pub/Sub
+    await asyncio.to_thread(_gcp.publish_nudge, nudge_dict)
     return {"status": "nudge_triggered", "action": nudge_dict}
 
 

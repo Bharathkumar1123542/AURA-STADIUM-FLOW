@@ -4,3 +4,5 @@ pydantic==2.7.1
 asyncpg==0.29.0
 paho-mqtt==2.0.0
 requests==2.31.0
+google-cloud-pubsub==2.21.4
+google-cloud-monitoring==2.21.0

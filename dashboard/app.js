@@ -84,11 +84,26 @@ function buildMapZones() {
     zone.className = "zone clear";
     zone.id = `zone-${id}`;
     Object.assign(zone.style, ZONE_POSITIONS[id]);
-    zone.innerHTML = `
-      <div class="zone-label">${id}</div>
-      <div class="zone-density" id="density-${id}">—%</div>
-    `;
+
+    // Accessibility: zones are interactive – expose as buttons for keyboard/screen-reader users
+    zone.setAttribute("role", "button");
+    zone.setAttribute("tabindex", "0");
+    zone.setAttribute("aria-label", `Section ${id} – density unknown`);
     zone.title = `Section ${id} – click for details`;
+
+    zone.innerHTML = `
+      <div class="zone-label" aria-hidden="true">${id}</div>
+      <div class="zone-density" id="density-${id}" aria-hidden="true">—%</div>
+    `;
+
+    // Keyboard activation (Enter / Space) mirrors click behaviour
+    zone.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        zone.click();
+      }
+    });
+
     $map.appendChild(zone);
   });
 }
@@ -193,14 +208,21 @@ function renderZones() {
     const label    = document.getElementById(`density-${s}`);
     const density  = state.densities[s] || 0;
     const isGreen  = state.activeGreenPaths.includes(s);
+    const pct      = (density * 100).toFixed(0);
 
-    label.textContent = `${(density * 100).toFixed(0)}%`;
+    label.textContent = `${pct}%`;
 
     zone.className = "zone " + (
       isGreen             ? "green-path" :
       density >= 0.70     ? "red" :
       density >= 0.55     ? "amber" : "clear"
     );
+
+    // Keep aria-label in sync so screen readers announce current density
+    const statusText = isGreen ? "green path active" :
+      density >= 0.70 ? "congested" :
+      density >= 0.55 ? "moderate" : "clear";
+    zone.setAttribute("aria-label", `Section ${s} – ${pct}% density, ${statusText}`);
   });
 }
 
@@ -252,9 +274,12 @@ function updateKPIs() {
 
 // ── Manual Override ────────────────────────────────────────────
 function attachListeners() {
-  // Density slider live feedback
+  // Density slider live feedback + ARIA attribute updates
   $densityRange.addEventListener("input", () => {
-    $densityVal.textContent = `${$densityRange.value}%`;
+    const val = $densityRange.value;
+    $densityVal.textContent = `${val}%`;
+    $densityRange.setAttribute("aria-valuenow", val);
+    $densityRange.setAttribute("aria-valuetext", `${val} percent`);
   });
 
   // Trigger nudge
@@ -413,5 +438,9 @@ function startClock() {
 function setConnected(connected) {
   state.connected = connected;
   $connectionDot.classList.toggle("connected", connected);
-  $connectionStat.textContent = connected ? "Live (Backend)" : "Simulating";
+  const statusText = connected ? "Live (Backend)" : "Simulating";
+  $connectionStat.textContent = statusText;
+  // Update ARIA on the live region so screen readers announce transitions
+  const bar = document.getElementById("connectionStatusBar");
+  if (bar) bar.setAttribute("aria-label", `Connection status: ${statusText}`);
 }

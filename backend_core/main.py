@@ -21,6 +21,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend_core.api.routes import router
 from backend_core.database.db import DatabaseManager
+from backend_core.services.gcp_metrics import GCPMetricsReporter
 
 logging.basicConfig(
     level=os.environ.get("LOG_LEVEL", "INFO"),
@@ -33,6 +34,7 @@ logger = logging.getLogger("backend_core")
 # app.state.db so that a single connection pool services the whole process.
 # ---------------------------------------------------------------------------
 _db = DatabaseManager()
+_metrics = GCPMetricsReporter()
 
 
 @asynccontextmanager
@@ -41,7 +43,9 @@ async def lifespan(app: FastAPI):
     # ── Startup ──────────────────────────────────────────────────────────────
     await _db.connect()
     app.state.db = _db          # expose to routes via request.app.state.db
-    logger.info("🚀 AURA Backend Core started.")
+    app.state.metrics = _metrics  # expose Cloud Monitoring reporter
+    gcp_status = "live" if _metrics.enabled else "no-op (GCP_PROJECT_ID not set)"
+    logger.info("🚀 AURA Backend Core started. Cloud Monitoring: %s", gcp_status)
 
     yield   # ← server runs here
 

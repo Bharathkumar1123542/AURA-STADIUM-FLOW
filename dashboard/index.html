@@ -8,110 +8,168 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Screen-reader-only utility */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    /* Skip link – visible only on focus */
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 0;
+      padding: 0.75rem 1.5rem;
+      background: #4f8ef7;
+      color: #fff;
+      font-weight: 600;
+      z-index: 9999;
+      border-radius: 0 0 8px 0;
+      text-decoration: none;
+      transition: top 0.15s;
+    }
+    .skip-link:focus {
+      top: 0;
+    }
+  </style>
 </head>
 <body>
+
+  <!-- Skip navigation for keyboard / screen-reader users -->
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
   <div class="app">
 
     <!-- ══ SIDEBAR ═════════════════════════════════════════ -->
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-icon">⚡</div>
+    <aside class="sidebar" role="complementary" aria-label="Application sidebar">
+      <div class="brand" role="banner">
+        <div class="brand-icon" aria-hidden="true">⚡</div>
         <div>
           <div class="brand-name">AURA</div>
           <div class="brand-sub">Flow Intelligence</div>
         </div>
       </div>
 
-      <nav class="nav">
-        <a href="#" class="nav-item active" id="nav-overview">
-          <span class="nav-icon">🗺️</span> Overview
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="#" class="nav-item active" id="nav-overview" aria-current="page">
+          <span class="nav-icon" aria-hidden="true">🗺️</span> Overview
         </a>
         <a href="#" class="nav-item" id="nav-nudges">
-          <span class="nav-icon">🎯</span> Nudges
+          <span class="nav-icon" aria-hidden="true">🎯</span> Nudges
         </a>
         <a href="#" class="nav-item" id="nav-analytics">
-          <span class="nav-icon">📊</span> Analytics
+          <span class="nav-icon" aria-hidden="true">📊</span> Analytics
         </a>
         <a href="#" class="nav-item" id="nav-settings">
-          <span class="nav-icon">⚙️</span> Settings
+          <span class="nav-icon" aria-hidden="true">⚙️</span> Settings
         </a>
       </nav>
 
-      <div class="connection-status">
-        <div class="status-dot" id="connectionDot"></div>
+      <div
+        class="connection-status"
+        id="connectionStatusBar"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        aria-label="Connection status"
+      >
+        <div class="status-dot" id="connectionDot" aria-hidden="true"></div>
         <span id="connectionStatus">Connecting…</span>
       </div>
     </aside>
 
     <!-- ══ MAIN CONTENT ════════════════════════════════════ -->
-    <main class="main">
+    <main class="main" id="main-content" role="main">
 
       <!-- Header -->
-      <header class="topbar">
+      <header class="topbar" role="banner">
         <div>
           <h1 class="topbar-title">Stadium Overview</h1>
           <p class="topbar-sub">Real-time crowd density · Auto-refreshes every 3s</p>
         </div>
         <div class="topbar-actions">
-          <div class="event-badge" id="eventBadge">🏟️ Live Event</div>
-          <div class="clock" id="clock"></div>
+          <div class="event-badge" id="eventBadge" aria-label="Live event indicator">
+            <span aria-hidden="true">🏟️</span> Live Event
+          </div>
+          <time class="clock" id="clock" aria-label="Current time" aria-live="off"></time>
         </div>
       </header>
 
       <!-- ── KPI Row ─────────────────────────────────────── -->
-      <section class="kpi-row">
-        <div class="kpi-card" id="kpi-high-risk">
-          <div class="kpi-icon">🔴</div>
-          <div class="kpi-val" id="kpiHighRisk">—</div>
+      <section class="kpi-row" aria-label="Key performance indicators">
+
+        <article class="kpi-card" id="kpi-high-risk" aria-label="High-risk zones count">
+          <div class="kpi-icon" aria-hidden="true">🔴</div>
+          <div class="kpi-val" id="kpiHighRisk" aria-atomic="true" aria-live="polite">—</div>
           <div class="kpi-label">High-Risk Zones</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-icon">🎯</div>
-          <div class="kpi-val" id="kpiNudges">0</div>
+        </article>
+
+        <article class="kpi-card" aria-label="Nudges fired count">
+          <div class="kpi-icon" aria-hidden="true">🎯</div>
+          <div class="kpi-val" id="kpiNudges" aria-atomic="true" aria-live="polite">0</div>
           <div class="kpi-label">Nudges Fired</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-icon">🟢</div>
-          <div class="kpi-val" id="kpiGreenPaths">0</div>
+        </article>
+
+        <article class="kpi-card" aria-label="Active green paths count">
+          <div class="kpi-icon" aria-hidden="true">🟢</div>
+          <div class="kpi-val" id="kpiGreenPaths" aria-atomic="true" aria-live="polite">0</div>
           <div class="kpi-label">Active Green Paths</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-icon">👥</div>
-          <div class="kpi-val" id="kpiAvgDensity">—</div>
+        </article>
+
+        <article class="kpi-card" aria-label="Average stadium density">
+          <div class="kpi-icon" aria-hidden="true">👥</div>
+          <div class="kpi-val" id="kpiAvgDensity" aria-atomic="true" aria-live="polite">—</div>
           <div class="kpi-label">Avg Stadium Density</div>
-        </div>
+        </article>
+
       </section>
 
       <!-- ── Heatmap + Controls ──────────────────────────── -->
-      <section class="heatmap-section">
+      <section class="heatmap-section" aria-label="Live heatmap and manual override controls">
 
         <!-- Stadium Heatmap -->
         <div class="panel heatmap-panel">
           <div class="panel-header">
-            <h2>Live Heatmap</h2>
-            <span class="panel-badge" id="heatmapTimestamp">—</span>
+            <h2 id="heatmap-heading">Live Heatmap</h2>
+            <time class="panel-badge" id="heatmapTimestamp" aria-label="Last updated time">—</time>
           </div>
-          <div class="stadium-map" id="stadiumMap">
-            <!-- Sections injected by JS -->
+
+          <div
+            class="stadium-map"
+            id="stadiumMap"
+            role="img"
+            aria-label="Stadium heatmap showing live crowd density by section"
+            aria-describedby="heatmap-heading"
+          >
+            <!-- Sections injected by JS – each zone gets role="button" and aria-label from JS -->
           </div>
+
           <!-- Map Legend -->
-          <div class="map-legend">
-            <span><span class="legend-dot red"></span> Congested ≥70%</span>
-            <span><span class="legend-dot amber"></span> Moderate 55-70%</span>
-            <span><span class="legend-dot green"></span> Clear &lt;55%</span>
-            <span><span class="legend-dot green-path"></span> Green Path</span>
-          </div>
+          <figure class="map-legend" aria-label="Heatmap colour legend">
+            <figcaption class="sr-only">Heatmap legend</figcaption>
+            <span><span class="legend-dot red" aria-hidden="true"></span> Congested ≥70%</span>
+            <span><span class="legend-dot amber" aria-hidden="true"></span> Moderate 55–70%</span>
+            <span><span class="legend-dot green" aria-hidden="true"></span> Clear &lt;55%</span>
+            <span><span class="legend-dot green-path" aria-hidden="true"></span> Green Path</span>
+          </figure>
         </div>
 
         <!-- Control Panel -->
-        <div class="panel controls-panel">
+        <div class="panel controls-panel" role="region" aria-label="Manual nudge override controls">
           <div class="panel-header">
             <h2>Manual Override</h2>
           </div>
 
           <div class="control-group">
             <label for="overrideSection">Target Section</label>
-            <select id="overrideSection">
+            <select id="overrideSection" aria-required="true" aria-label="Select target stadium section">
               <option value="A">Section A – West Corridor</option>
               <option value="B">Section B – North Concessions</option>
               <option value="C">Section C – South Exit</option>
@@ -124,53 +182,91 @@
           <div class="control-group">
             <label for="overrideDensity">Inject Density Score</label>
             <div class="range-row">
-              <input type="range" id="overrideDensity" min="0" max="100" value="75" />
-              <span id="overrideDensityVal">75%</span>
+              <input
+                type="range"
+                id="overrideDensity"
+                min="0"
+                max="100"
+                value="75"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="75"
+                aria-valuetext="75 percent"
+                aria-label="Density injection percentage"
+              />
+              <span id="overrideDensityVal" aria-live="polite" aria-atomic="true">75%</span>
             </div>
           </div>
 
           <div class="control-group">
             <label for="nudgeType">Nudge Type</label>
-            <select id="nudgeType">
+            <select id="nudgeType" aria-label="Select nudge type to trigger">
               <option value="discount">Discount Voucher</option>
               <option value="notification">Push Notification</option>
               <option value="led_only">LED Only</option>
             </select>
           </div>
 
-          <button class="btn-primary" id="triggerNudgeBtn">
-            ⚡ Trigger Nudge
+          <!-- Hidden description for screen readers -->
+          <span id="nudge-desc" class="sr-only">
+            Manually triggers a crowd redistribution nudge for the selected stadium section using the chosen nudge type.
+          </span>
+
+          <button
+            class="btn-primary"
+            id="triggerNudgeBtn"
+            aria-describedby="nudge-desc"
+            type="button"
+          >
+            <span aria-hidden="true">⚡</span> Trigger Nudge
           </button>
-          <button class="btn-secondary" id="clearAlertsBtn">
-            🔕 Clear All Alerts
+          <button
+            class="btn-secondary"
+            id="clearAlertsBtn"
+            aria-label="Clear all nudge alerts and reset the event log"
+            type="button"
+          >
+            <span aria-hidden="true">🔕</span> Clear All Alerts
           </button>
 
           <!-- Response preview -->
-          <div class="response-box" id="responseBox">
+          <div
+            class="response-box"
+            role="region"
+            aria-label="Nudge API response preview"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             <pre id="responseContent">// Nudge response will appear here</pre>
           </div>
         </div>
       </section>
 
       <!-- ── Section Detail Table ────────────────────────── -->
-      <section class="panel analytics-panel">
+      <section class="panel analytics-panel" aria-label="Stadium section analytics">
         <div class="panel-header">
-          <h2>Section Analytics</h2>
-          <button class="btn-sm" id="exportBtn">⬇ Export CSV</button>
+          <h2 id="analytics-table-heading">Section Analytics</h2>
+          <button class="btn-sm" id="exportBtn" type="button" aria-label="Export section analytics as CSV file">
+            <span aria-hidden="true">⬇</span> Export CSV
+          </button>
         </div>
-        <div class="table-wrap">
-          <table id="sectionTable">
+        <div class="table-wrap" role="region" aria-label="Section analytics data table" tabindex="0">
+          <table
+            id="sectionTable"
+            aria-label="Stadium section crowd density data"
+            aria-describedby="analytics-table-heading"
+          >
             <thead>
               <tr>
-                <th>Section</th>
-                <th>Density</th>
-                <th>Predicted (10 min)</th>
-                <th>LED State</th>
-                <th>Status</th>
-                <th>Last Nudge</th>
+                <th scope="col">Section</th>
+                <th scope="col">Density</th>
+                <th scope="col">Predicted (10 min)</th>
+                <th scope="col">LED State</th>
+                <th scope="col">Status</th>
+                <th scope="col">Last Nudge</th>
               </tr>
             </thead>
-            <tbody id="tableBody">
+            <tbody id="tableBody" aria-live="polite" aria-relevant="all">
               <!-- Rows injected by JS -->
             </tbody>
           </table>
@@ -178,13 +274,24 @@
       </section>
 
       <!-- ── Nudge Log ───────────────────────────────────── -->
-      <section class="panel log-panel">
+      <section
+        class="panel log-panel"
+        aria-label="Live event log"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-atomic="false"
+      >
         <div class="panel-header">
           <h2>Live Event Log</h2>
-          <span class="panel-badge" id="logCount">0 events</span>
+          <span class="panel-badge" id="logCount" aria-live="polite" aria-atomic="true">0 events</span>
         </div>
-        <div class="log-stream" id="logStream">
-          <div class="log-placeholder">Waiting for events…</div>
+        <div
+          class="log-stream"
+          id="logStream"
+          role="log"
+          aria-label="Stadium event log entries"
+        >
+          <div class="log-placeholder" role="status">Waiting for events…</div>
         </div>
       </section>
 
