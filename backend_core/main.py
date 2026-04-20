@@ -17,6 +17,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from backend_core.api.routes import router
 from backend_core.database.db import DatabaseManager
@@ -67,10 +68,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
-
+app.include_router(router, prefix="/api")
 
 @app.get("/health")
 async def health():
     """Health check endpoint for container orchestration."""
     return {"status": "healthy", "service": "aura-backend-core"}
+
+# Mount the static dashboard frontend last so it doesn't intercept API routes
+app.mount("/", StaticFiles(directory="dashboard", html=True), name="dashboard")
